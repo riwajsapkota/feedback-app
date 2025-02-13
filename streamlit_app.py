@@ -106,7 +106,7 @@ Key Strengths:
         # Send email using FormSubmit
         try:
             response = requests.post(
-                "https://formsubmit.co/riwaj.sapkota@mailpit.net",
+                "https://formsubmit.co/riwaj.sapkota@gmail.com",
                 data={
                     "name": feedback_data['name'],
                     "email": feedback_data['email'],
