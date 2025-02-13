@@ -1,34 +1,37 @@
 import streamlit as st
-import smtplib
-from email.mime.text import MIMEText
+from sendgrid import SendGridAPIClient
+from sendgrid.helpers.mail import Mail
 import os
 from datetime import datetime
+import json
 
 # Page config
 st.set_page_config(page_title="360° Feedback Form", layout="wide")
 
 def send_email(feedback_data):
-    # Note: You'll need to set these environment variables
-    smtp_server = "smtp.gmail.com"
-    smtp_port = 587
-    sender_email = os.environ.get('GMAIL_ADDRESS')
-    sender_password = os.environ.get('GMAIL_APP_PASSWORD')
-    receiver_email = "riwaj16@gmail.com"
-
-    # Create message
-    msg_body = "\n".join([f"{k}: {v}" for k, v in feedback_data.items()])
-    msg = MIMEText(msg_body)
-    msg['Subject'] = f"New 360° Feedback Received - {datetime.now().strftime('%Y-%m-%d %H:%M')}"
-    msg['From'] = sender_email
-    msg['To'] = receiver_email
-
-    # Send email
     try:
-        with smtplib.SMTP(smtp_server, smtp_port) as server:
-            server.starttls()
-            server.login(sender_email, sender_password)
-            server.send_message(msg)
-        return True
+        # Get SendGrid API key from environment variable
+        sg = SendGridAPIClient(os.environ.get('SENDGRID_API_KEY'))
+        
+        # Format feedback data as HTML
+        html_content = "<h2>New 360° Feedback Received</h2>"
+        for key, value in feedback_data.items():
+            if key == "Ratings":
+                html_content += f"<h3>{key}:</h3>"
+                for comp, rating in value.items():
+                    html_content += f"<p>{comp}: {rating}/5</p>"
+            else:
+                html_content += f"<h3>{key}:</h3><p>{value}</p>"
+
+        message = Mail(
+            from_email='your-verified-sender@domain.com',  # Must be verified in SendGrid
+            to_emails='riwaj.sapkota@gmail.com',
+            subject=f"New 360° Feedback Received - {datetime.now().strftime('%Y-%m-%d %H:%M')}",
+            html_content=html_content
+        )
+        
+        response = sg.send(message)
+        return True if response.status_code == 202 else False
     except Exception as e:
         st.error(f"Error sending email: {str(e)}")
         return False
