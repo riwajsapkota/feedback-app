@@ -15,12 +15,12 @@ with st.form("feedback_form"):
     # Anonymous option
     is_anonymous = st.checkbox("Submit anonymously")
 
+    # Only show name and email fields if not anonymous
+    name = "Anonymous"
+    email = "Anonymous"
     if not is_anonymous:
         name = st.text_input("Your Name")
         email = st.text_input("Your Email")
-    else:
-        name = "Anonymous"
-        email = "Anonymous"
 
     # Relationship context
     relationship = st.selectbox(
@@ -61,7 +61,7 @@ with st.form("feedback_form"):
 
     # Create hidden field for email
     st.markdown("""
-    <form action="https://formsubmit.co/riwaj16@gmail.com" method="POST" id="feedback-form" style="display: none;">
+    <form action="https://formsubmit.co/riwaj.sapkota@gmail.com" method="POST" id="feedback-form" style="display: none;">
         <input type="text" name="_honey" style="display:none">
         <input type="hidden" name="_captcha" value="false">
         <input type="hidden" name="_template" value="table">
@@ -73,8 +73,8 @@ with st.form("feedback_form"):
     submitted = st.form_submit_button("Submit Feedback")
     
     if submitted:
+        # Create feedback data dictionary - only include identity if not anonymous
         feedback_data = {
-            "Submitted By": f"Name: {name}, Email: {email}",
             "Relationship": relationship,
             "Ratings": json.dumps(ratings),
             "Strengths": strengths,
@@ -82,6 +82,12 @@ with st.form("feedback_form"):
             "Suggestions": suggestions,
             "Timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         }
+        
+        # Only add submitter info if not anonymous
+        if not is_anonymous:
+            feedback_data["Submitted By"] = f"Name: {name}, Email: {email}"
+        else:
+            feedback_data["Submitted By"] = "Anonymous"
         
         # Create JavaScript to submit the form
         js = f"""
