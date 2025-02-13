@@ -1,7 +1,6 @@
 import streamlit as st
 import json
 from datetime import datetime
-import requests
 
 # Page config
 st.set_page_config(page_title="360° Feedback Form", layout="wide")
@@ -10,17 +9,29 @@ st.set_page_config(page_title="360° Feedback Form", layout="wide")
 st.title("360° Feedback Form")
 st.write("Thank you for taking the time to provide feedback. Your input is valuable for personal and professional development.")
 
+# Note about form submission
+st.info("Note: Please use the 'Submit Feedback' button at the bottom to submit the form. Pressing Enter will only move to the next field.")
+
+# Initialize session state for storing form data
+if 'name' not in st.session_state:
+    st.session_state.name = "Anonymous"
+if 'email' not in st.session_state:
+    st.session_state.email = "Anonymous"
+
 # Create form using st.form to ensure single submission
-with st.form("feedback_form"):
+with st.form("feedback_form", clear_on_submit=True):  # Added clear_on_submit=True to reset form after submission
     # Anonymous option
     is_anonymous = st.checkbox("Submit anonymously")
 
-    # Only show name and email fields if not anonymous
-    name = "Anonymous"
-    email = "Anonymous"
+    # Conditionally render name and email fields
     if not is_anonymous:
-        name = st.text_input("Your Name")
-        email = st.text_input("Your Email")
+        name = st.text_input("Your Name", key="name_input")
+        email = st.text_input("Your Email", key="email_input")
+        st.session_state.name = name
+        st.session_state.email = email
+    else:
+        st.session_state.name = "Anonymous"
+        st.session_state.email = "Anonymous"
 
     # Relationship context
     relationship = st.selectbox(
@@ -61,7 +72,7 @@ with st.form("feedback_form"):
 
     # Create hidden field for email
     st.markdown("""
-    <form action="https://formsubmit.co/riwaj.sapkota@gmail.com" method="POST" id="feedback-form" style="display: none;">
+    <form action="https://formsubmit.co/riwaj16@gmail.com" method="POST" id="feedback-form" style="display: none;">
         <input type="text" name="_honey" style="display:none">
         <input type="hidden" name="_captcha" value="false">
         <input type="hidden" name="_template" value="table">
@@ -69,36 +80,40 @@ with st.form("feedback_form"):
     </form>
     """, unsafe_allow_html=True)
 
-    # Submit button
-    submitted = st.form_submit_button("Submit Feedback")
+    # Submit button with clear label
+    submitted = st.form_submit_button("Submit Feedback (Click here to submit)")
     
     if submitted:
-        # Create feedback data dictionary - only include identity if not anonymous
-        feedback_data = {
-            "Relationship": relationship,
-            "Ratings": json.dumps(ratings),
-            "Strengths": strengths,
-            "Areas for Improvement": improvements,
-            "Suggestions": suggestions,
-            "Timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        }
-        
-        # Only add submitter info if not anonymous
-        if not is_anonymous:
-            feedback_data["Submitted By"] = f"Name: {name}, Email: {email}"
+        # Validate required fields when not anonymous
+        if not is_anonymous and (not name.strip() or not email.strip()):
+            st.error("Please fill in both name and email fields before submitting.")
         else:
-            feedback_data["Submitted By"] = "Anonymous"
-        
-        # Create JavaScript to submit the form
-        js = f"""
-        <script>
-            var form = document.getElementById('feedback-form');
-            document.getElementById('feedback-data').value = '{json.dumps(feedback_data)}';
-            form.submit();
-        </script>
-        """
-        st.markdown(js, unsafe_allow_html=True)
-        st.success("Thank you! Your feedback has been submitted successfully.")
+            # Create feedback data dictionary
+            feedback_data = {
+                "Relationship": relationship,
+                "Ratings": json.dumps(ratings),
+                "Strengths": strengths,
+                "Areas for Improvement": improvements,
+                "Suggestions": suggestions,
+                "Timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            }
+            
+            # Only add submitter info if not anonymous
+            if not is_anonymous:
+                feedback_data["Submitted By"] = f"Name: {st.session_state.name}, Email: {st.session_state.email}"
+            else:
+                feedback_data["Submitted By"] = "Anonymous"
+            
+            # Create JavaScript to submit the form
+            js = f"""
+            <script>
+                var form = document.getElementById('feedback-form');
+                document.getElementById('feedback-data').value = '{json.dumps(feedback_data)}';
+                form.submit();
+            </script>
+            """
+            st.markdown(js, unsafe_allow_html=True)
+            st.success("Thank you! Your feedback has been submitted successfully.")
 
 # Footer with privacy notice
 st.markdown("---")
