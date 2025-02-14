@@ -70,7 +70,7 @@ def main():
 
         # Hidden input for FormSubmit configuration
         st.markdown("""
-        <form action="https://formsubmit.co/riwaj.sapkota@mailpit.net" method="POST">
+        <form action="https://formsubmit.co/riwaj.sapkota@gmail.com" method="POST">
             <input type="hidden" name="_captcha" value="false">
             <input type="hidden" name="_template" value="table">
         </form>
